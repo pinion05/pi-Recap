@@ -72,6 +72,20 @@ extension entry wiring session_start/turn_end/context events.
 
 The numbers below come from a single real coding session (the pi-Recap debugging session itself). Each `recap-entry` in the session log carries **both** `originalText` and `recapText`, so compression is measured exactly — no estimation. Counts reflect 0.1.3 behavior — results under 200 chars are skipped, so only the 63 recappable results are counted. Meaning-preservation is a qualitative read of representative cases.
 
+### Vanilla vs pi-Recap (static simulation)
+
+A controlled comparison using this session's exact tool-result sequence: **vanilla** keeps every result as the original; **pi-Recap** swaps each to its recap once it ages past the swap threshold. Tokens measured with tiktoken (`cl100k_base`).
+
+| Metric | Vanilla | pi-Recap | Saved |
+|---|---|---|---|
+| Main-context tool-result tokens (cumulative, end of session) | 75,554 | 7,041 | **90.7%** (−68,513) |
+| At 50% through the session | 60,041 | 3,763 | 93.7% |
+| At 25% through the session | 29,228 | 3,508 | 88.0% |
+
+Savings compound as the session grows — by the halfway point the vanilla curve is already ~16× the pi-Recap curve.
+
+> ⚠️ **Scope.** 90.7% is **main context-window** savings — what keeps a long session from hitting the context limit. It is *not* total billed tokens: the familiar adds its own calls (100 recaps here, 7,616 output tokens). Familiar **input** tokens aren't logged (only main-call `outputTokens` are tracked), so net cost requires a live A/B. This simulation answers "how much context does pi-Recap free up?" — answered: **90.7%**.
+
 ### Compression scales with result size
 
 | Original size | Count | Avg compression |
