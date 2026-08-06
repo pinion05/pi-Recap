@@ -1,0 +1,4 @@
+node_modules/
+.pi-subagents/
+.pi-review/
+*.log
