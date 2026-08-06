@@ -1,6 +1,24 @@
-# pi-Recap
+<p align="center">
+  <img src="assets/recap.jpeg" width="720" alt="pi-Recap">
+</p>
 
-> **A context-sharing familiar summarizes each tool result into 1–3 lines. Old results are secretly swapped with recaps — originals stay recoverable.**
+<h3 align="center">A context-sharing familiar summarizes every tool result into 1–3 lines — old results are swapped with recaps, recoverable on demand.</h3>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@npmc_5/pi-recap"><img src="https://img.shields.io/npm/v/@npmc_5/pi-recap?color=cb3837&label=npm"></a>
+  <a href="https://www.npmjs.com/package/@npmc_5/pi-recap"><img src="https://img.shields.io/npm/dt/@npmc_5/pi-recap?color=cb3837&label=downloads"></a>
+  <img src="https://img.shields.io/npm/l/@npmc_5/pi-recap?color=blue">
+  <img src="https://img.shields.io/node/v/@npmc_5/pi-recap?color=339933">
+  <img src="https://img.shields.io/badge/pi-extension-7c3aed">
+</p>
+
+<p align="center">
+  <a href="#install"><b>Install</b></a> ·
+  <a href="https://www.npmjs.com/package/@npmc_5/pi-recap">npm</a> ·
+  <a href="#measured-impact">Benchmark</a> ·
+  <a href="#commands">Docs</a> ·
+  <a href="#config">Config</a>
+</p>
 
 A [Pi](https://github.com/badlogic/pi-mono) extension. As the main agent works, every tool result (`read`, `bash`, `rg`, web fetch, …) gets a tiny recap written by a **familiar** — an LLM call that shares the main agent's full context and model. A few turns later, the verbose original is quietly replaced in context by the recap. If detail is ever needed again, `recap_recover` brings the original back.
 
