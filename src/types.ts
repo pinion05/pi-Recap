@@ -8,6 +8,9 @@ export const SETTINGS_DIR_NAME = "recap";
 /** Session-entry customType used to persist each recap record (NOT in LLM context). */
 export const CUSTOM_TYPE_RECAP = "recap-entry";
 
+/** customType for the injected recap context-message (IN LLM context, not shown to user). */
+export const CUSTOM_TYPE_RECAP_MSG = "recap-message";
+
 /** Recovery tool name (stable — referenced from the inline `[recap_recover: rN]` marker). */
 export const RECOVER_TOOL_NAME = "recap_recover";
 

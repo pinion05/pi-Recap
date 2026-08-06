@@ -1,60 +1,58 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RecapIndex } from "../src/recap.js";
-import { applyRecaps } from "../src/swap.js";
+import { selectRemovable } from "../src/swap.js";
 
 function toolResult(toolCallId: string, text: string): any {
   return { role: "toolResult", toolCallId, content: [{ type: "text", text }] };
 }
 
-test("applyRecaps is a no-op when the index is empty", () => {
-  const idx = new RecapIndex();
-  const msgs = [toolResult("a", "x")];
-  const r = applyRecaps(msgs, idx, 10, 5);
-  assert.equal(r.changed, false);
-  assert.equal(r.swappedCount, 0);
-  assert.equal(r.messages, msgs);
+function idx(records: Array<Partial<import("../src/types.js").RecapRecord> & { toolCallId: string }>) {
+  const i = new RecapIndex();
+  i.hydrate(
+    records.map((r, n) => ({
+      toolCallId: r.toolCallId,
+      shortId: r.shortId ?? `r${n + 1}`,
+      toolName: r.toolName ?? "read",
+      birthTurn: r.birthTurn ?? 0,
+      recapText: r.recapText ?? "short recap",
+      originalText: r.originalText ?? "long original text here",
+    })),
+  );
+  return i;
+}
+
+test("selectRemovable is empty when nothing is aged+injected", () => {
+  const i = idx([{ toolCallId: "a", birthTurn: 0 }]);
+  const injected = new Set<string>();
+  const msgs = [toolResult("a", "long original text here")];
+  assert.equal(selectRemovable(msgs, i, injected, 1, 1).size, 0); // not injected
+  injected.add("a");
+  assert.equal(selectRemovable(msgs, i, injected, 0, 1).size, 0); // not aged (currentTurn 0)
 });
 
-test("applyRecaps swaps aged results but leaves young ones untouched", () => {
-  const idx = new RecapIndex();
-  idx.hydrate([
-    { toolCallId: "old", shortId: "r1", toolName: "read", birthTurn: 0, recapText: "did X", originalText: "long original text here" },
-    { toolCallId: "new", shortId: "r2", toolName: "read", birthTurn: 9, recapText: "did Y", originalText: "long original text here" },
+test("selectRemovable picks aged + injected + shorter-recap results", () => {
+  const i = idx([
+    { toolCallId: "old", birthTurn: 0 }, // aged + injected -> removable
+    { toolCallId: "young", birthTurn: 5 }, // not aged
   ]);
-  const msgs = [toolResult("old", "long original text here"), toolResult("new", "long original text here")];
-  const r = applyRecaps(msgs, idx, 10, 5);
-  assert.equal(r.changed, true);
-  assert.equal(r.swappedCount, 1);
-  // old (age 10 >= 5) swapped
-  assert.ok(r.messages[0].content[0].text.startsWith("〈recap〉"));
-  assert.ok(r.messages[0].content[0].text.includes("[recap_recover: r1]"));
-  // young (age 1 < 5) unchanged — same object reference
-  assert.equal(r.messages[1], msgs[1]);
+  const injected = new Set(["old", "young"]);
+  const msgs = [toolResult("old", "long original text here"), toolResult("young", "long original text here")];
+  const out = selectRemovable(msgs, i, injected, 10, 5);
+  assert.equal(out.size, 1);
+  assert.ok(out.has("old"));
 });
 
-test("applyRecaps is idempotent", () => {
-  const idx = new RecapIndex();
-  idx.hydrate([
-    { toolCallId: "old", shortId: "r1", toolName: "read", birthTurn: 0, recapText: "did X", originalText: "long original text here" },
-  ]);
-  const msgs = [toolResult("old", "long original text here")];
-  const first = applyRecaps(msgs, idx, 10, 5);
-  assert.equal(first.changed, true);
-  const second = applyRecaps(first.messages, idx, 10, 5);
-  assert.equal(second.changed, false);
-  assert.equal(second.swappedCount, 0);
-  assert.equal(second.messages, first.messages);
+test("selectRemovable skips when the recap is not shorter than the original", () => {
+  const i = idx([{ toolCallId: "c", birthTurn: 0, recapText: "this recap is way longer than tiny", originalText: "tiny" }]);
+  const injected = new Set(["c"]);
+  const msgs = [toolResult("c", "tiny")];
+  assert.equal(selectRemovable(msgs, i, injected, 10, 1).size, 0);
 });
 
-test("applyRecaps skips when the recap is not shorter than the original", () => {
-  const idx = new RecapIndex();
-  const original = "tiny";
-  idx.hydrate([
-    { toolCallId: "c", shortId: "r1", toolName: "read", birthTurn: 0, recapText: "this recap is much longer than the tiny original", originalText: original },
-  ]);
-  const msgs = [toolResult("c", original)];
-  const r = applyRecaps(msgs, idx, 10, 5);
-  assert.equal(r.changed, false);
-  assert.equal(r.messages, msgs);
+test("selectRemovable: threshold 0 disables", () => {
+  const i = idx([{ toolCallId: "c", birthTurn: 0 }]);
+  const injected = new Set(["c"]);
+  const msgs = [toolResult("c", "long original text here")];
+  assert.equal(selectRemovable(msgs, i, injected, 100, 0).size, 0);
 });

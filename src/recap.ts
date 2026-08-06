@@ -49,6 +49,9 @@ export class RecapIndex {
   size(): number {
     return this.byId.size;
   }
+  all(): RecapRecord[] {
+    return Array.from(this.byId.values());
+  }
   markPending(toolCallId: string): void {
     this.pending.add(toolCallId);
   }
