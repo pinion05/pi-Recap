@@ -110,6 +110,23 @@ The recap is a flat ~1–3 lines regardless of input, so the larger the original
 
 **Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. Results under 200 chars are skipped entirely, so the recap is never longer than the original.
 
+### Semantic fidelity (0.1.3 baseline)
+
+Compression only matters if the meaning survives. We scored recaps on **task-grounded recall**: for each tool result, the agent's *own subsequent action* defines which facts actually mattered, and we check whether those survive in the recap. (Not "how much of the original is kept", but "how much of what the agent went on to *use* is kept.") LLM-as-judge over 73 recapped results from the same session.
+
+| Result size | Task-grounded recall |
+|---|---|
+| Small (<1K) | **90.6%** |
+| Medium (1–5K) | 63.8% |
+| Large (5K+) | **59.1%** |
+| **Overall** | **80.6%** (74.3% fully preserved · 12.6% partial · 13.1% lost) |
+
+**Headline finding: compression and fidelity run in opposite directions.** Token compression is *best* on the largest results (99%); semantic fidelity is *worst* there (59%). Big outputs (full directory listings, large type definitions, long logs) carry more than a 1–3 line recap can hold.
+
+**What gets lost:** the dominant failure mode is dropping *exact identifiers* — file paths, constant names, function locations, config values. The familiar captures the concept but loses the precise name, which is precisely what coding work depends on.
+
+**Known blind spot:** this metric only scores facts the agent went on to *directly use*. It misses *serendipitous* value — a useful detail a large log happened to surface that the agent didn't act on immediately but would benefit from later. Recap can drop those too. Both gaps (exact identifiers + serendipitous detail) are targeted for the next familiar-prompt revision.
+
 ### Caveats
 
 - **Single coding session; YMMV.** Compression favors tool-heavy coding (lots of `ls` / `cat` / `grep` / log dumps). Sessions dominated by tiny results see little benefit and may net negative.
@@ -201,6 +218,8 @@ context         Phase A: for each new toolResult → fire-and-forget runRecap(..
 ## Status
 
 Early/experimental. The familiar call uses your **main model per result**, so on long sessions with many tool calls it adds one frontier-model call each — mitigated heavily by prefix-cache reuse, but real. Tunable caps (min size to bother recapping, cheap-model option) are planned.
+
+**Next (0.1.4):** revise the familiar prompt to close the 0.1.3 fidelity gaps surfaced above — preserve exact identifiers (paths, names, values) and serendipitous detail, not just the task's direct asks.
 
 ## License
 
