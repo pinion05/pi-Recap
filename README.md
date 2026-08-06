@@ -50,6 +50,43 @@ extension entry wiring session_start/turn_end/context events.
 
 ---
 
+## Measured impact
+
+The numbers below come from a single real coding session (the pi-Recap debugging session itself: 64 tool results recapped over ~1 hour). Each `recap-entry` in the session log carries **both** `originalText` and `recapText`, so compression is measured exactly — no estimation. Meaning-preservation is a qualitative read of representative cases.
+
+### Compression scales with result size
+
+| Original size | Count | Avg compression |
+|---|---|---|
+| < 200 chars | 18 | **−491%** (recap *longer* than original) |
+| 200–1K | 23 | 49% |
+| 1K–5K | 19 | 85% |
+| 5K–20K | 2 | 96% |
+| > 20K | 2 | 99% |
+| **All** | **64** | **90.6%** (178K → 17K chars ≈ 44.5K → 4.2K tokens) |
+
+The recap is a flat ~1–3 lines regardless of input, so the larger the original, the more dramatic the savings. Below ~200 chars the recap is *longer* than the original — the familiar adds task context to a terse result. This is a known cost; future versions will skip recapping very small results.
+
+### Representative cases
+
+| Ref | Tool | Original | Recap | Saved | Meaning preserved |
+|---|---|---|---|---|---|
+| r3 | `bash` (`ls -la ~`) | 18,255 chars (full dir listing) | 266 chars ("no pi-recap dir; related paths: …") | 99% | ⚠️ Partial — paths captured, full file list lost (recoverable) |
+| r33 | `bash` (`grep .d.ts`) | 51,323 chars (type defs) | 226 chars ("truncateHead returns TruncationResult{content,…}") | 100% | ✅ Core fact exact |
+| r32 | `bash` (`grep -rn`) | 4,771 chars | 189 chars | 96% | ✅ Core fact exact |
+| r26 | `bash` (errored) | 979 chars (module-load error) | 283 chars ("require() failed …") | 71% | ✅ Cause captured |
+| r50 | `bash` | 203 chars (test pass + commit) | 267 chars | −32% | ✅ Accurate, just longer |
+| r6 | `bash` | 11 chars (`(no output)`) | 302 chars ("no pi-recap anywhere searched…") | −2645% | ⚠️ Over-reach — recap infers facts the empty original can't contain |
+
+**Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. The failure mode is *over-coverage* on near-empty results (r6) — the familiar fills in context the original didn't carry, which is useful as a hint but isn't a faithful summary of *that* result.
+
+### Caveats
+
+- **Single coding session; YMMV.** Compression favors tool-heavy coding (lots of `ls` / `cat` / `grep` / log dumps). Sessions dominated by tiny results see little benefit and may net negative.
+- **Cross-project contamination is real.** A recap can draw in facts from elsewhere in the same session. If you switch projects mid-session — or hot-swap the package you're actively developing — an original from project A can pick up a recap flavored by project B's context. Like tire marks from two different wheels left on the same track. Treat recaps of cross-contaminated results as **hints, not ground truth**; `recap_recover` is the source of truth.
+
+---
+
 ## Install
 
 ```bash
