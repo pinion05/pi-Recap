@@ -53,7 +53,7 @@ extension entry wiring session_start/turn_end/context events.
 ## Install
 
 ```bash
-pi install npm:pi-recap          # stable, once published
+pi install npm:@npmc_5/pi-recap     # stable, once published
 pi install git:github.com/pinion05/pi-Recap   # cutting edge
 pi -e .                                      # try from source
 ```
