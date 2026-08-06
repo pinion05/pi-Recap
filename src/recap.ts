@@ -9,7 +9,7 @@
  * agent's next call.
  */
 
-import { CUSTOM_TYPE_RECAP, type RecapRecord, type StableCtx } from "./types.js";
+import { CUSTOM_TYPE_RECAP, MIN_RECAP_CHARS, type RecapRecord, type StableCtx } from "./types.js";
 
 const RECAP_INSTRUCTION = (toolName: string, id: string) =>
   `Above is the full conversation so far, including a tool result you just received.
@@ -24,6 +24,11 @@ export function toolResultText(msg: any): string {
     .filter((c: any) => c && c.type === "text" && typeof c.text === "string")
     .map((c: any) => c.text)
     .join("\n");
+}
+
+/** Whether a tool result is large enough to be worth recapping. */
+export function isRecappable(text: string): boolean {
+  return text.length >= MIN_RECAP_CHARS;
 }
 
 export class RecapIndex {

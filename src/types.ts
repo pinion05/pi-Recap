@@ -14,6 +14,10 @@ export const CUSTOM_TYPE_RECAP_MSG = "recap-message";
 /** Recovery tool name (stable — referenced from the inline `[recap_recover: rN]` marker). */
 export const RECOVER_TOOL_NAME = "recap_recover";
 
+/** Tool results shorter than this are not worth recapping — the familiar's
+ *  fixed 1–3 line summary would be longer than the original. */
+export const MIN_RECAP_CHARS = 200;
+
 export interface RecapConfig {
   /** Master switch. When false, no recaps run and no swaps happen. */
   enabled: boolean;

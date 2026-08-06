@@ -20,7 +20,7 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { loadConfig } from "./src/config.js";
-import { RecapIndex, toolResultText } from "./src/recap.js";
+import { RecapIndex, isRecappable, toolResultText } from "./src/recap.js";
 import { selectRemovable } from "./src/swap.js";
 import { registerCommands } from "./src/commands.js";
 import { registerRecoverTool } from "./src/recovery.js";
@@ -100,9 +100,12 @@ export default function (pi: ExtensionAPI) {
     for (const msg of messages) {
       if (!msg || msg.role !== "toolResult" || !msg.toolCallId) continue;
       if (index.has(msg.toolCallId) || index.isPending(msg.toolCallId)) continue;
-      index.markPending(msg.toolCallId);
       const toolName = toolNameById.get(msg.toolCallId) ?? msg.toolName ?? "tool";
       const originalText = toolResultText(msg);
+      // Skip tiny results — the familiar's 1–3 line summary would be longer
+      // than the original, so recapping costs more tokens than it saves.
+      if (!isRecappable(originalText)) continue;
+      index.markPending(msg.toolCallId);
       const birthTurn = currentTurn;
       const snap = messages.slice();
       index.runRecap(stable, msg.toolCallId, toolName, birthTurn, originalText, snap).catch(() => {});

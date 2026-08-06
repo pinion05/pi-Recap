@@ -65,7 +65,7 @@ The numbers below come from a single real coding session (the pi-Recap debugging
 | > 20K | 2 | 99% |
 | **All** | **64** | **90.6%** (178K → 17K chars ≈ 44.5K → 4.2K tokens) |
 
-The recap is a flat ~1–3 lines regardless of input, so the larger the original, the more dramatic the savings. Below ~200 chars the recap is *longer* than the original — the familiar adds task context to a terse result. This is a known cost; future versions will skip recapping very small results.
+The recap is a flat ~1–3 lines regardless of input, so the larger the original, the more dramatic the savings. Results under 200 chars are skipped entirely — the summary would be longer than the original, so recapping would cost tokens instead of saving them.
 
 ### Representative cases
 
@@ -76,14 +76,13 @@ The recap is a flat ~1–3 lines regardless of input, so the larger the original
 | r32 | `bash` (`grep -rn`) | 4,771 chars | 189 chars | 96% | ✅ Core fact exact |
 | r26 | `bash` (errored) | 979 chars (module-load error) | 283 chars ("require() failed …") | 71% | ✅ Cause captured |
 | r50 | `bash` | 203 chars (test pass + commit) | 267 chars | −32% | ✅ Accurate, just longer |
-| r6 | `bash` | 11 chars (`(no output)`) | 302 chars ("no pi-recap anywhere searched…") | −2645% | ⚠️ Over-reach — recap infers facts the empty original can't contain |
+| r6 | `bash` | 11 chars (`(no output)`) | 302 chars ("no pi-recap anywhere searched…") | −2645% | ⚠️ Over-reach — recap infers facts the empty original can't contain _(measured pre-0.1.3; <200 chars now skipped)_ |
 
-**Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. The failure mode is *over-coverage* on near-empty results (r6) — the familiar fills in context the original didn't carry, which is useful as a hint but isn't a faithful summary of *that* result.
+**Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. The pre-0.1.3 failure mode was *over-coverage* on near-empty results (r6) — the familiar filled in context the original didn't carry. As of 0.1.3 those results are skipped, so the summary is never longer than the original.
 
 ### Caveats
 
 - **Single coding session; YMMV.** Compression favors tool-heavy coding (lots of `ls` / `cat` / `grep` / log dumps). Sessions dominated by tiny results see little benefit and may net negative.
-- **Cross-project contamination is real.** A recap can draw in facts from elsewhere in the same session. If you switch projects mid-session — or hot-swap the package you're actively developing — an original from project A can pick up a recap flavored by project B's context. Like tire marks from two different wheels left on the same track. Treat recaps of cross-contaminated results as **hints, not ground truth**; `recap_recover` is the source of truth.
 
 ---
 
