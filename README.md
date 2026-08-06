@@ -33,7 +33,7 @@ tool result arrives
 ┌──────────────────────────────────────────────┐
 │ FAMILIAR (same model, same context prefix)   │
 │  “summarize tool result <id> in 1–3 lines”   │
-│  → recapText                                  │
+│  → recapText                                 │
 └──────────────────────────────────────────────┘
    │  (shared prefix → prefix-cache hit; also warms
    │   the cache for the main agent's next call)
@@ -45,8 +45,8 @@ recap stored in session index (original kept)
    ▼
 ┌──────────────────────────────────────────────┐
 │ context event: aged tool result              │
-│   quietly replaced with 〈recap〉 …           │
-│   [recap_recover: rN]                         │
+│   quietly replaced with <recap>              │
+│   [recap_recover: rN]                        │
 └──────────────────────────────────────────────┘
 ```
 
