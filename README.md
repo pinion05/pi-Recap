@@ -70,18 +70,18 @@ extension entry wiring session_start/turn_end/context events.
 
 ## Measured impact
 
-The numbers below come from a single real coding session (the pi-Recap debugging session itself: 64 tool results recapped over ~1 hour). Each `recap-entry` in the session log carries **both** `originalText` and `recapText`, so compression is measured exactly — no estimation. Meaning-preservation is a qualitative read of representative cases.
+The numbers below come from a single real coding session (the pi-Recap debugging session itself). Each `recap-entry` in the session log carries **both** `originalText` and `recapText`, so compression is measured exactly — no estimation. Counts reflect 0.1.3 behavior — results under 200 chars are skipped, so only the 63 recappable results are counted. Meaning-preservation is a qualitative read of representative cases.
 
 ### Compression scales with result size
 
 | Original size | Count | Avg compression |
 |---|---|---|
-| < 200 chars | 18 | **−491%** (recap *longer* than original) |
-| 200–1K | 23 | 49% |
-| 1K–5K | 19 | 85% |
-| 5K–20K | 2 | 96% |
+| < 200 chars | — | *skipped since 0.1.3* (recap would be longer than original) |
+| 200–1K | 34 | 49% |
+| 1K–5K | 24 | 86% |
+| 5K–20K | 3 | 96% |
 | > 20K | 2 | 99% |
-| **All** | **64** | **90.6%** (178K → 17K chars ≈ 44.5K → 4.2K tokens) |
+| **All (≥200)** | **63** | **92.1%** (204K → 16K chars ≈ 50.9K → 4.0K tokens) |
 
 The recap is a flat ~1–3 lines regardless of input, so the larger the original, the more dramatic the savings. Results under 200 chars are skipped entirely — the summary would be longer than the original, so recapping would cost tokens instead of saving them.
 
@@ -93,10 +93,8 @@ The recap is a flat ~1–3 lines regardless of input, so the larger the original
 | r33 | `bash` (`grep .d.ts`) | 51,323 chars (type defs) | 226 chars ("truncateHead returns TruncationResult{content,…}") | 100% | ✅ Core fact exact |
 | r32 | `bash` (`grep -rn`) | 4,771 chars | 189 chars | 96% | ✅ Core fact exact |
 | r26 | `bash` (errored) | 979 chars (module-load error) | 283 chars ("require() failed …") | 71% | ✅ Cause captured |
-| r50 | `bash` | 203 chars (test pass + commit) | 267 chars | −32% | ✅ Accurate, just longer |
-| r6 | `bash` | 11 chars (`(no output)`) | 302 chars ("no pi-recap anywhere searched…") | −2645% | ⚠️ Over-reach — recap infers facts the empty original can't contain _(measured pre-0.1.3; <200 chars now skipped)_ |
 
-**Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. The pre-0.1.3 failure mode was *over-coverage* on near-empty results (r6) — the familiar filled in context the original didn't carry. As of 0.1.3 those results are skipped, so the summary is never longer than the original.
+**Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. Results under 200 chars are skipped entirely, so the recap is never longer than the original.
 
 ### Caveats
 
