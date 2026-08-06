@@ -34,10 +34,13 @@ export function registerRecoverTool(pi: ExtensionAPI, index: RecapIndex): void {
           blocks.push(`## ${ref}\n(not found — no recap record for this ref)`);
           continue;
         }
-        const body = truncateHead(record.originalText, {
+        const truncated = truncateHead(record.originalText, {
           maxLines: DEFAULT_MAX_LINES,
           maxBytes: DEFAULT_MAX_BYTES,
         });
+        // truncateHead returns a TruncationResult object ({content, truncated, ...}),
+        // not a string — use .content or the body renders as "[object Object]".
+        const body = typeof truncated === "string" ? truncated : truncated.content;
         blocks.push(`## ${record.shortId} — ${record.toolName} (toolCallId ${record.toolCallId})\n${body}`);
       }
       return { content: [{ type: "text", text: blocks.join("\n\n") }] };
