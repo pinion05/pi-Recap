@@ -34,7 +34,7 @@ test("selectRemovable is empty when nothing is aged+injected", () => {
 test("selectRemovable picks aged + injected + shorter-recap results", () => {
   const i = idx([
     { toolCallId: "old", birthTurn: 0 }, // aged + injected -> removable
-    { toolCallId: "young", birthTurn: 5 }, // not aged
+    { toolCallId: "young", birthTurn: 8 }, // not aged (age 2 < 5)
   ]);
   const injected = new Set(["old", "young"]);
   const msgs = [toolResult("old", "long original text here"), toolResult("young", "long original text here")];
