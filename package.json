@@ -1,7 +1,7 @@
 {
   "name": "@npmc_5/pi-recap",
-  "version": "0.1.3",
-  "description": "pi-Recap — a context-sharing familiar summarizes each tool result into 1–3 lines; old results are secretly swapped with recaps (recoverable).",
+  "version": "0.1.4",
+  "description": "pi-Recap — a background familiar that summarizes each tool result into 1–3 lines and swaps stale results for recaps (recoverable on demand), reclaiming up to ~84% of tool-result tokens in long sessions.",
   "type": "module",
   "scripts": {
     "build": "echo 'nothing to build'",

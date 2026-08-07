@@ -99,6 +99,37 @@ Savings compound as the session grows — by the halfway point the vanilla curve
 
 The recap is a flat ~1–3 lines regardless of input, so the larger the original, the more dramatic the savings. Results under 200 chars are skipped entirely — the summary would be longer than the original, so recapping would cost tokens instead of saving them.
 
+### At scale — a 226-recap real session
+
+A longer real-world session (2.5 MB log, the pi-Recap development session) ran on pre-`<200`-skip code, so its log records *every* tool result — including short ones the 0.1.3 skip now excludes. It is the best "before" picture at scale: 226 recaps generated, 127 later injected into context. Tokens measured with tiktoken (`cl100k_base`).
+
+| Metric | Value |
+|---|---|
+| Recaps generated / injected | 226 / 127 |
+| Swap-eligible (recap shorter than original) | **130 / 226 = 58%** |
+| Tokens on swap-eligible results | 79,762 → 13,793 — **65,969 saved (83.9%)** |
+| Net-negative (recap ≥ original → never swapped) | **96 / 226 = 42%** |
+| Recovery tool invoked | **0 / 127** (every recap was sufficient) |
+
+**By tool (char compression):**
+
+| Tool | n | Compression |
+|---|---|---|
+| `read` | 13 | 92.6% |
+| `web_search` | 7 | 82.7% |
+| `source_check` | 1 | 76.5% |
+| `fetch_content` | 5 | 72.6% |
+| `bash` | 186 | 68.4% |
+| `edit` | 8 | **−169%** |
+| `write` | 6 | **−413%** |
+
+Two findings from this session shaped the roadmap:
+
+1. **The `<200`-char skip (0.1.3) is well-founded.** 60 sub-200-char results were recapped anyway on the pre-skip code and were almost all net-negative — a recap of a one-line confirmation (`Successfully wrote 2926 bytes`) ends up longer than the original. Skipping them is pure savings.
+2. **`edit`/`write` should be excluded too.** Every one of their recaps was net-negative: the result is already a one-line success message. A tool allow/deny list is the natural next gate after the size threshold.
+
+The **0/127 recovery rate** is the strongest quality signal: across a long session the agent never once needed the original back. Output is English-dominant (~86%) regardless of conversation language — the familiar prompt is in English and the source (code, logs) is mostly English — which keeps token efficiency high (English ≈ 4 chars/token vs Korean ≈ 1.5).
+
 ### Representative cases
 
 | Ref | Tool | Original | Recap | Saved | Meaning preserved |
@@ -219,7 +250,9 @@ context         Phase A: for each new toolResult → fire-and-forget runRecap(..
 
 Early/experimental. The familiar call uses your **main model per result**, so on long sessions with many tool calls it adds one frontier-model call each — mitigated heavily by prefix-cache reuse, but real. Tunable caps (min size to bother recapping, cheap-model option) are planned.
 
-**Next (0.1.4):** revise the familiar prompt to close the 0.1.3 fidelity gaps surfaced above — preserve exact identifiers (paths, names, values) and serendipitous detail, not just the task's direct asks.
+**0.1.4** adds the at-scale 226-recap real-session measurement above and refines the package description.
+
+**Next (0.1.5):** (a) exclude `edit`/`write` results from recapping — every such recap in the 226-recap session was net-negative; (b) revise the familiar prompt to close the 0.1.3 fidelity gaps — preserve exact identifiers (paths, names, values) and serendipitous detail, not just the task's direct asks.
 
 ## License
 
