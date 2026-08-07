@@ -143,6 +143,56 @@ recap은 입력 크기와 무관하게 1–3줄로 평평하기 때문에, 원�
 
 **결론:** ~1K자 이상의 결과에 대해 familiar는 85–99%를 압축하면서 핵심 팩트를 보존합니다. 200자 미만 결과는 아예 건너뛰어, recap이 원본보다 길어지는 일이 없습니다.
 
+### 이상적 사례 — 실제 raw→recap 3쌍
+
+226-recap 세션에서 발췌. 각각 실제 툴 결과의 앞부분과, 그것을 대체한 recap 전문을 나란히 보여줍니다. 주목할 점 — 환경변수 이름, CLI 플래그, 점수, 날짜, 모델명 등 코딩 작업이 실제로 의존하는 식별자가 그대로 살아남습니다.
+
+**`read` — ARC-AGI-3 설치 README (85.7% · 2,410→345자)**
+
+원본 (앞부분):
+```
+# ARC-AGI-3 Benchmarking
+## Quickstart
+1. git clone https://github.com/arcprize/arc-agi-3-benchmarking.git
+2. uv venv && uv sync
+3. cp .env.example to .env
+4. ARC_API_KEY=your_api_key_here   (from arcprize.org)
+5. uv run main.py --game=ls20
+… 총 2,410자
+```
+
+Recap:
+> `.env.example` defines required env vars — `ARC_API_KEY` (from arcprize.org, needed to access games), `ARC_BASE_URL`, and LLM provider keys (e.g. `OPENROUTER_API_KEY`). README confirms: `uv venv && uv sync`, then run `uv run main.py --game=ls20 --config=openai-gpt-5-4-2026-03-05` for single game, or omit `--game` for all 25 games.
+
+**`bash` — `harbor run --help` 출력 (96.6% · 6,561→226자)**
+
+원본 (앞부분):
+```
+│ --agent,-a <name|module:Class>   a single spec is accepted.        │
+│ --dataset,-d ...                 terminal-bench/terminal-bench-2-1 │
+│ --mounts,--mount… <str>          JSON array of volume mounts for   │
+│                                  the environment container         │
+… 정렬된 도움말 표 총 6,561자 …
+```
+
+Recap:
+> `harbor run` CLI fully mapped: agent via `-a <name|module:Class>`, dataset via `-d terminal-bench/terminal-bench-2-1`, single task via `-i <name>`, model via `-m`. Built-in agents include `pi` and `codex` but no `prime-agent`.
+
+**`web_search` — ARC-AGI-3 리더보드 (88.1% · 1,517→181자)**
+
+원본 (앞부분):
+```
+- ARC-AGI-3 score over 90 agent released 2025: No. The premise conflates ARC-AGI-1 with ARC-AGI-3…
+- ARC-AGI-3 90점 이상 에이전트: 네. Tycho 100.0% (2026-07-29), Retrodict 99.9% (7-19), baseline1 99.0% (7-15)…
+- ARC-AGI-3 leaderboard top score state of art agent: Top published ARC-AGI-3 agent…
+… 총 1,517자 …
+```
+
+Recap:
+> Top ARC-AGI-3 Public Demo agents: Tycho (100%), Retrodict (99.9%), baseline1 (99.0%). A "Prime Agent" reportedly self-reported 95.5%. Top agents use GPT-5.6/Claude Opus 5 harnesses.
+
+이런 경우가 pi-Recap이 설계된 자리입니다 — 본문은 크지만 행동에 필요한 핵심은 작은, 텍스트 위주 결과. (200자 미만 결과나 `edit`/`write` 확인 메시지는, 위 대규모 표에서 본 것처럼 건너뛰거나 역압축입니다.)
+
 ### 의미 보존 (0.1.3 기준선)
 
 압축은 의미가 살아남을 때만 의미가 있습니다. recap을 **작업 기반 재현율**로 평가했습니다: 각 툴 결과에 대해, 에이전트의 *직후 행동*이 실제로 중요했던 팩트를 정의하고, 그것이 recap에 살아남는지 검사합니다. ("원본의 얼마나 남았는가"가 아니라 "에이전트가 이어서 *사용한* 것의 얼마나 남았는가".) 같은 세션의 73개 recapped 결과에 대한 LLM-as-judge 평가입니다.

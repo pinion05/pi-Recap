@@ -143,6 +143,56 @@ The **0/127 recovery rate** is the strongest quality signal: across a long sessi
 
 **Read:** for any result above ~1K chars the familiar compresses 85–99% with the core fact intact. Results under 200 chars are skipped entirely, so the recap is never longer than the original.
 
+### Ideal cases — three real raw→recap pairs
+
+From the 226-recap session. Each shows an abbreviated slice of the actual tool result next to the full recap that replaced it. Note what survives: exact env-var names, CLI flags, scores, dates, and model names — the identifiers a coding task actually depends on.
+
+**`read` — ARC-AGI-3 setup README (85.7% · 2,410→345 chars)**
+
+Raw (excerpt):
+```
+# ARC-AGI-3 Benchmarking
+## Quickstart
+1. git clone https://github.com/arcprize/arc-agi-3-benchmarking.git
+2. uv venv && uv sync
+3. cp .env.example to .env
+4. ARC_API_KEY=your_api_key_here   (from arcprize.org)
+5. uv run main.py --game=ls20
+… 2,410 chars total
+```
+
+Recap:
+> `.env.example` defines required env vars — `ARC_API_KEY` (from arcprize.org, needed to access games), `ARC_BASE_URL`, and LLM provider keys (e.g. `OPENROUTER_API_KEY`). README confirms: `uv venv && uv sync`, then run `uv run main.py --game=ls20 --config=openai-gpt-5-4-2026-03-05` for single game, or omit `--game` for all 25 games.
+
+**`bash` — `harbor run --help` output (96.6% · 6,561→226 chars)**
+
+Raw (excerpt):
+```
+│ --agent,-a <name|module:Class>   a single spec is accepted.        │
+│ --dataset,-d ...                 terminal-bench/terminal-bench-2-1 │
+│ --mounts,--mount… <str>          JSON array of volume mounts for   │
+│                                  the environment container         │
+… 6,561 chars of aligned help table …
+```
+
+Recap:
+> `harbor run` CLI fully mapped: agent via `-a <name|module:Class>`, dataset via `-d terminal-bench/terminal-bench-2-1`, single task via `-i <name>`, model via `-m`. Built-in agents include `pi` and `codex` but no `prime-agent`.
+
+**`web_search` — ARC-AGI-3 leaderboard (88.1% · 1,517→181 chars)**
+
+Raw (excerpt):
+```
+- ARC-AGI-3 score over 90 agent released 2025: No. The premise conflates ARC-AGI-1 with ARC-AGI-3…
+- ARC-AGI-3 90점 이상 에이전트: 네. Tycho 100.0% (2026-07-29), Retrodict 99.9% (7-19), baseline1 99.0% (7-15)…
+- ARC-AGI-3 leaderboard top score state of art agent: Top published ARC-AGI-3 agent…
+… 1,517 chars total …
+```
+
+Recap:
+> Top ARC-AGI-3 Public Demo agents: Tycho (100%), Retrodict (99.9%), baseline1 (99.0%). A "Prime Agent" reportedly self-reported 95.5%. Top agents use GPT-5.6/Claude Opus 5 harnesses.
+
+These are the cases pi-Recap is built for — text-heavy results where the actionable subset is small. (Sub-200-char results and `edit`/`write` confirmations are skipped or net-negative, as the at-scale table shows.)
+
 ### Semantic fidelity (0.1.3 baseline)
 
 Compression only matters if the meaning survives. We scored recaps on **task-grounded recall**: for each tool result, the agent's *own subsequent action* defines which facts actually mattered, and we check whether those survive in the recap. (Not "how much of the original is kept", but "how much of what the agent went on to *use* is kept.") LLM-as-judge over 73 recapped results from the same session.
