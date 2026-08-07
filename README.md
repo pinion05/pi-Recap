@@ -13,6 +13,8 @@
 </p>
 
 <p align="center">
+  <b>English</b> ·
+  <a href="README.ko.md">한국어</a> ·
   <a href="#install"><b>Install</b></a> ·
   <a href="https://www.npmjs.com/package/@npmc_5/pi-recap">npm</a> ·
   <a href="#measured-impact">Benchmark</a> ·
