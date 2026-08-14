@@ -11,7 +11,7 @@ export const CUSTOM_TYPE_RECAP = "recap-entry";
 /** customType for the injected recap context-message (IN LLM context, not shown to user). */
 export const CUSTOM_TYPE_RECAP_MSG = "recap-message";
 
-/** Recovery tool name (stable — referenced from the inline `[recap_recover: rN]` marker). */
+/** Recovery tool name (stable — referenced from the injected `[original recoverable via recap_recover(...)]` marker). */
 export const RECOVER_TOOL_NAME = "recap_recover";
 
 /** Tool results shorter than this are not worth recapping — the familiar's
@@ -23,11 +23,14 @@ export interface RecapConfig {
   enabled: boolean;
   /** A tool result is swapped with its recap once it is this many turns old. */
   swapTurnThreshold: number;
+  /** Tool names whose results pi-Recap should never recap (blocklist). */
+  excludeTools: string[];
 }
 
 export const DEFAULT_CONFIG: RecapConfig = {
   enabled: false,
   swapTurnThreshold: 5,
+  excludeTools: [],
 };
 
 export interface RecapRecord {

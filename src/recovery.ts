@@ -16,10 +16,10 @@ export function registerRecoverTool(pi: ExtensionAPI, index: RecapIndex): void {
     name: RECOVER_TOOL_NAME,
     label: "Recover original tool result",
     description:
-      "Recover the full original tool result that pi-Recap replaced with a recap. Pass the short ref from a [recap_recover: rN] marker (or a toolCallId).",
+      "Recover the full original tool result that pi-Recap replaced with a recap. Pass the short ref from a [original recoverable via recap_recover({ refs: [\"rN\"] })] marker (or a toolCallId).",
     promptSnippet: "Recover the original behind a recap",
     promptGuidelines: [
-      "When a tool result starts with 〈recap〉 and has a [recap_recover: rN] marker, call recap_recover with that ref to get the full original output if you need more detail.",
+      "When a tool result is recapped, a 〈pi-Recap〉 note with an [original recoverable via recap_recover(...)] marker appears; call recap_recover with that ref to get the full original output if you need more detail.",
     ],
     parameters: Type.Object({
       refs: Type.Array(Type.String({ description: "Short ref (e.g. r12) or toolCallId" }), {

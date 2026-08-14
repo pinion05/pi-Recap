@@ -9,7 +9,7 @@
  * agent's next call.
  */
 
-import { CUSTOM_TYPE_RECAP, MIN_RECAP_CHARS, type RecapRecord, type StableCtx } from "./types.js";
+import { CUSTOM_TYPE_RECAP, MIN_RECAP_CHARS, type RecapConfig, type RecapRecord, type StableCtx } from "./types.js";
 
 const RECAP_INSTRUCTION = (toolName: string, id: string) =>
   `Above is the full conversation so far, including a tool result you just received.
@@ -29,6 +29,58 @@ export function toolResultText(msg: any): string {
 /** Whether a tool result is large enough to be worth recapping. */
 export function isRecappable(text: string): boolean {
   return text.length >= MIN_RECAP_CHARS;
+}
+
+/** Whether a tool is excluded from recapping by the user's blocklist. */
+export function isToolExcluded(toolName: string, config: RecapConfig): boolean {
+  const name = (toolName ?? "tool").trim();
+  return config.excludeTools.includes(name);
+}
+
+/**
+ * Phase A eligibility — pure. Walk a context snapshot and return the tool
+ * results that should get a recap fired for them now: (a) Recap is enabled,
+ * (b) genuinely new since the last walk, (c) not already tracked, (d) large
+ * enough, (e) not tool-excluded. `seen` ALWAYS accumulates (even while
+ * disabled / skipped), so flipping Recap on mid-session never revisits
+ * results that predate the flip — the parallel-recap blow-up guard.
+ */
+export function collectNewRecappables(
+  messages: any[],
+  seen: Set<string>,
+  alreadyTracked: (id: string) => boolean,
+  config: RecapConfig,
+): { toolCallId: string; toolName: string; text: string }[] {
+  // Resolve tool names from assistant tool_use blocks (toolResult messages
+  // don't always carry the name).
+  const toolNameById = new Map<string, string>();
+  for (const m of messages) {
+    if (m?.role === "assistant" && Array.isArray(m.content)) {
+      for (const b of m.content) {
+        if (b?.type === "tool_use" && b.id) toolNameById.set(b.id, b.name ?? "tool");
+      }
+    }
+  }
+
+  const out: { toolCallId: string; toolName: string; text: string }[] = [];
+  for (const msg of messages) {
+    if (!msg || msg.role !== "toolResult" || !msg.toolCallId) continue;
+    const id = msg.toolCallId;
+    const isNew = !seen.has(id);
+    seen.add(id);
+    if (!config.enabled || !isNew) continue;
+    if (alreadyTracked(id)) continue;
+    const text = toolResultText(msg);
+    // Skip tiny results — the familiar's 1–3 line summary would be longer
+    // than the original, so recapping costs more tokens than it saves.
+    if (!isRecappable(text)) continue;
+    const toolName = toolNameById.get(id) ?? msg.toolName ?? "tool";
+    // Skip tools the user excluded from recapping (e.g. hash-anchored
+    // editors whose line anchors must stay verbatim in context).
+    if (isToolExcluded(toolName, config)) continue;
+    out.push({ toolCallId: id, toolName, text });
+  }
+  return out;
 }
 
 export class RecapIndex {
@@ -59,6 +111,15 @@ export class RecapIndex {
   }
   markPending(toolCallId: string): void {
     this.pending.add(toolCallId);
+  }
+
+  /** Drop all state. Called on session_start — extension closures persist
+   * across session switches in one pi process, so stale records from the
+   * previous session must not leak into the new one. */
+  clear(): void {
+    this.byId.clear();
+    this.pending.clear();
+    this.counter = 0;
   }
 
   /** Reconstruct the index from persisted session entries. */

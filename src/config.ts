@@ -19,6 +19,9 @@ export function loadConfig(): RecapConfig {
         Number.isFinite(parsed?.swapTurnThreshold) && parsed.swapTurnThreshold >= 0
           ? Math.floor(parsed.swapTurnThreshold)
           : DEFAULT_CONFIG.swapTurnThreshold,
+      excludeTools: Array.isArray(parsed?.excludeTools)
+        ? parsed.excludeTools.filter((t: unknown): t is string => typeof t === "string")
+        : DEFAULT_CONFIG.excludeTools,
     };
   } catch {
     return { ...DEFAULT_CONFIG };

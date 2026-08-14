@@ -238,6 +238,7 @@ Then:
 | `/Recap on` / `off` | Enable / disable |
 | `/Recap status` | State, threshold, recap count, current turn |
 | `/Recap threshold [n]` | Show or set the swap turn threshold (default 5) |
+| `/Recap tools` | Toggle which tools pi-Recap recaps (interactive 🟢/🔴 picker, cursor-preserving) |
 | `/Recap help` | Help |
 
 ## Recovery tool
@@ -255,7 +256,8 @@ recap_recover({ refs: ["r12"] })   → full original tool result
 ```jsonc
 {
   "enabled": false,
-  "swapTurnThreshold": 5
+  "swapTurnThreshold": 5,
+  "excludeTools": []
 }
 ```
 
@@ -263,6 +265,7 @@ recap_recover({ refs: ["r12"] })   → full original tool result
 |---|---|---|
 | `enabled` | `false` | Master switch |
 | `swapTurnThreshold` | `5` | A result is swapped once it is this many turns old |
+| `excludeTools` | `[]` | Tool names whose results are never recapped (blocklist) |
 
 Notes:
 - Enabling mid-session does **not** retroactively recap earlier turns (recaps are generated for results seen from now on).
@@ -285,10 +288,10 @@ src/
 ### Event flow
 
 ```
-session_start   loadConfig → hydrate index from session entries → reset turn counter
-turn_end        currentTurn = max(currentTurn, event.turnIndex)
-context         Phase A: for each new toolResult → fire-and-forget runRecap(...)
-                Phase B: applyRecaps(...) → replace aged results with recaps
+session_start   loadConfig → clear + hydrate index/injected → reconstruct turn → reset seen/primed
+turn_end        currentTurn += 1 (persisted) → inject recap-messages for aged records (enabled only)
+context         prime seen on first event → Phase A: recap NEW results (enabled) via collectNewRecappables(...)
+                Phase B: remove aged raw toolResults once their recap is injected
 ```
 
 ### Persistence
@@ -304,7 +307,9 @@ Early/experimental. The familiar call uses your **main model per result**, so on
 
 **0.1.4** adds the at-scale 226-recap real-session measurement above and refines the package description.
 
-**Next (0.1.5):** (a) exclude `edit`/`write` results from recapping — every such recap in the 226-recap session was net-negative; (b) revise the familiar prompt to close the 0.1.3 fidelity gaps — preserve exact identifiers (paths, names, values) and serendipitous detail, not just the task's direct asks.
+**0.2.0** ships planned item (a): a per-tool `excludeTools` blocklist plus a `/Recap tools` interactive picker (🟢/🔴, cursor-preserving), and adds recap-only-what-was-generated-while-enabled eligibility — enabling mid-session never replays prior history.
+
+**Next:** (b) revise the familiar prompt to close the 0.1.3 fidelity gaps — preserve exact identifiers (paths, names, values) and serendipitous detail, not just the task's direct asks.
 
 ## License
 
